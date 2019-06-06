@@ -26,6 +26,7 @@ import org.keycloak.events.EventType;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.credential.OTPCredentialModel;
 import org.keycloak.models.utils.HmacOTP;
 import org.keycloak.models.utils.TimeBasedOTP;
 import org.keycloak.representations.idm.AuthenticationExecutionInfoRepresentation;
@@ -62,13 +63,22 @@ public class AppInitiatedActionTotpSetupTest extends AbstractAppInitiatedActionT
 
     @Before
     public void setOTPAuthRequired() {
-        for (AuthenticationExecutionInfoRepresentation execution : adminClient.realm("test").flows().getExecutions("browser")) {
-            String providerId = execution.getProviderId();
-            if ("auth-otp-form".equals(providerId)) {
-                execution.setRequirement(AuthenticationExecutionModel.Requirement.OPTIONAL.name());
-                adminClient.realm("test").flows().updateExecutions("browser", execution);
-            }
-        }
+        // KEYCLOAK-11745
+        adminClient.realm("test").flows().getExecutions("browser")
+                .stream()
+                .filter(execution -> execution.getDisplayName().equals("Browser - Conditional OTP"))
+                .forEach(execution -> {
+                        execution.setRequirement(AuthenticationExecutionModel.Requirement.REQUIRED.name());
+                        adminClient.realm("test").flows().updateExecutions("browser", execution);
+                });
+        // KEYCLOAK-11898
+        adminClient.realm("test").flows().getExecutions("browser")
+                .stream()
+                .filter(execution -> execution.getProviderId().equals("auth-otp-form"))
+                .forEach(execution -> {
+                        execution.setRequirement(AuthenticationExecutionModel.Requirement.OPTIONAL.name());
+                        adminClient.realm("test").flows().updateExecutions("browser", execution);
+                 });
 
         ApiUtil.removeUserByUsername(testRealm(), "test-user@localhost");
         UserRepresentation user = UserBuilder.create().enabled(true)
@@ -383,7 +393,7 @@ public class AppInitiatedActionTotpSetupTest extends AbstractAppInitiatedActionT
                     .otpLookAheadWindow(1)
                     .otpDigits(8)
                     .otpPeriod(30)
-                    .otpType(UserCredentialModel.TOTP)
+                    .otpType(OTPCredentialModel.TOTP)
                     .otpAlgorithm(HmacOTP.HMAC_SHA1)
                     .otpInitialCounter(0);
         adminClient.realm("test").update(realmRep);
@@ -436,7 +446,7 @@ public class AppInitiatedActionTotpSetupTest extends AbstractAppInitiatedActionT
                     .otpLookAheadWindow(0)
                     .otpDigits(6)
                     .otpPeriod(30)
-                    .otpType(UserCredentialModel.HOTP)
+                    .otpType(OTPCredentialModel.HOTP)
                     .otpAlgorithm(HmacOTP.HMAC_SHA1)
                     .otpInitialCounter(0);
         adminClient.realm("test").update(realmRep);
@@ -481,7 +491,7 @@ public class AppInitiatedActionTotpSetupTest extends AbstractAppInitiatedActionT
                     .otpLookAheadWindow(5)
                     .otpDigits(6)
                     .otpPeriod(30)
-                    .otpType(UserCredentialModel.HOTP)
+                    .otpType(OTPCredentialModel.HOTP)
                     .otpAlgorithm(HmacOTP.HMAC_SHA1)
                     .otpInitialCounter(0);
         adminClient.realm("test").update(realmRep);
@@ -503,7 +513,7 @@ public class AppInitiatedActionTotpSetupTest extends AbstractAppInitiatedActionT
                 .otpLookAheadWindow(1)
                 .otpDigits(6)
                 .otpPeriod(30)
-                .otpType(UserCredentialModel.TOTP)
+                .otpType(OTPCredentialModel.TOTP)
                 .otpAlgorithm(HmacOTP.HMAC_SHA1)
                 .otpInitialCounter(0);
         adminClient.realm("test").update(realmRep);
