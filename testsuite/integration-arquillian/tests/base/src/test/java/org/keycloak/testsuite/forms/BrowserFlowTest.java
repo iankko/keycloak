@@ -273,7 +273,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
         try {
             configureBrowserFlowWithAlternativeCredentials();
 
-            // test-user has not other credential than his password. No combobox is displayed 
+            // test-user has not other credential than his password. No combobox is displayed
             loginUsernameOnlyPage.open();
             loginUsernameOnlyPage.login("test-user@localhost");
             loginTotpPage.assertCredentialsComboboxAvailability(false);
@@ -504,7 +504,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
         }
     }
 
-    // Configure a flow with a conditional sub flow with a condition where a specific role is required 
+    // Configure a flow with a conditional sub flow with a condition where a specific role is required
     private void configureBrowserFlowOTPNeedsRole(String requiredRole) {
         final String newFlowAlias = "browser - rule";
         testingClient.server("test").run(session -> FlowUtil.inCurrentRealm(session).copyBrowserFlow(newFlowAlias));
