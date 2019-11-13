@@ -22,11 +22,10 @@ import org.keycloak.authentication.requiredactions.WebAuthnRegisterFactory;
 import org.keycloak.events.Details;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.AuthenticationExecutionModel.Requirement;
-import org.keycloak.models.AuthenticationFlowModel;
 import org.keycloak.models.Constants;
-import org.keycloak.models.RealmModel;
 import org.keycloak.models.utils.DefaultAuthenticationFlows;
 import org.keycloak.models.utils.TimeBasedOTP;
+import org.keycloak.representations.idm.AuthenticationFlowRepresentation;
 import org.keycloak.representations.idm.IdentityProviderRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RequiredActionProviderRepresentation;
@@ -35,6 +34,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.testsuite.AbstractTestRealmKeycloakTest;
 import org.keycloak.testsuite.ActionURIUtils;
 import org.keycloak.testsuite.AssertEvents;
+import org.keycloak.testsuite.admin.authentication.AbstractAuthenticationTest;
 import org.keycloak.testsuite.auth.page.login.OneTimeCode;
 import org.keycloak.testsuite.broker.SocialLoginTest;
 import org.keycloak.testsuite.client.KeycloakTestingClient;
@@ -44,7 +44,6 @@ import org.keycloak.testsuite.pages.LoginPage;
 import org.keycloak.testsuite.pages.LoginTotpPage;
 import org.keycloak.testsuite.pages.LoginUsernameOnlyPage;
 import org.keycloak.testsuite.pages.PasswordPage;
-import org.keycloak.testsuite.runonserver.RunOnServer;
 import org.keycloak.testsuite.runonserver.RunOnServerDeployment;
 import org.keycloak.testsuite.util.FlowUtil;
 import org.keycloak.testsuite.util.OAuthClient;
@@ -293,8 +292,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             Assert.assertEquals("OTP - first", loginTotpPage.getSelectedCredential());
             Assert.assertEquals(Arrays.asList("OTP - first", "Password", "OTP - second"), loginTotpPage.getAvailableCredentials());
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
-            importTestRealm(null);
+            revertFlows("browser - alternative");
         }
     }
 
@@ -342,7 +340,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             // The whole flow is disabled
             Assert.assertFalse(needsPassword("user-with-two-configured-otp"));
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - non missing conditional authenticator");
         }
     }
 
@@ -381,7 +379,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             // executors of this flow are executed anyway
             passwordPage.assertCurrent();
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - nonconditional");
         }
     }
 
@@ -427,7 +425,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             Assert.assertFalse(oneTimeCodePage.isOtpLabelPresent());
             Assert.assertFalse(loginTotpPage.isCurrent());
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - rule");
         }
     }
 
@@ -457,7 +455,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             driver.get(aHref.getAttribute("href"));
             Assert.assertEquals("Keycloak Account Management", driver.getTitle());
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - alternative non-interactive executor");
         }
     }
 
@@ -500,7 +498,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             events.expectLogin().user(testRealm().users().search("user-with-one-configured-otp").get(0).getId())
                     .detail(Details.USERNAME, "user-with-one-configured-otp").assertEvent();
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - back button subflow");
         }
     }
 
@@ -554,7 +552,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             errorPage.assertCurrent();
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
         }
     }
 
@@ -587,8 +585,8 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             for (IdentityProviderRepresentation providerRepresentation : adminClient.realm(testRealm).identityProviders().findAll()) {
                 adminClient.realm(testRealm).identityProviders().get(providerRepresentation.getInternalId()).remove();
             }
-            // Reset Authentication flow back to the default Browser flow one
-            testingClient.server(testRealm).run(setBrowserFlowToRealm());
+
+            revertFlows("browser - copy 1");
         }
     }
 
@@ -629,7 +627,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             errorPage.assertCurrent();
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
         }
     }
 
@@ -654,7 +652,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
                     .detail(Details.USERNAME, "user-with-one-configured-otp").assertEvent();
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
         }
     }
 
@@ -717,7 +715,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             Assert.assertFalse(loginTotpPage.isCurrent());
             events.expectLogin().user(userId).detail(Details.USERNAME, "user-with-two-configured-otp").assertEvent();
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
         }
     }
 
@@ -743,7 +741,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             events.expectLogin().user(userId).detail(Details.USERNAME, "user-with-one-configured-otp").assertEvent();
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
         }
     }
 
@@ -802,7 +800,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             errorPage.assertCurrent();
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
             RequiredActionProviderSimpleRepresentation simpleRepresentation = new RequiredActionProviderSimpleRepresentation();
             simpleRepresentation.setProviderId("CONFIGURE_TOTP");
             simpleRepresentation.setName(otpRequiredAction.getName());
@@ -829,7 +827,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             errorPage.assertCurrent();
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
             otpRequiredAction.setEnabled(true);
             testRealm().flows().updateRequiredAction("CONFIGURE_TOTP", otpRequiredAction);
         }
@@ -850,7 +848,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             Assert.assertTrue(driver.getCurrentUrl().contains("required-action?execution=CONFIGURE_TOTP"));
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
             UserRepresentation user = testRealm().users().search("test-user@localhost").get(0);
             user.setRequiredActions(Collections.emptyList());
             testRealm().users().get(user.getId()).update(user);
@@ -893,7 +891,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             errorPage.assertCurrent();
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
         }
     }
 
@@ -921,7 +919,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             errorPage.assertCurrent();
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
             testRealm().flows().removeRequiredAction(WebAuthnRegisterFactory.PROVIDER_ID);
         }
     }
@@ -948,7 +946,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             Assert.assertTrue(driver.getCurrentUrl().contains("required-action?execution=" + WebAuthnRegisterFactory.PROVIDER_ID));
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
             testRealm().flows().removeRequiredAction(WebAuthnRegisterFactory.PROVIDER_ID);
             UserRepresentation user = testRealm().users().search("test-user@localhost").get(0);
             user.setRequiredActions(Collections.emptyList());
@@ -993,7 +991,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             passwordPage.assertCurrent();
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
         }
     }
 
@@ -1045,7 +1043,7 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
             passwordPage.assertCurrent();
 
         } finally {
-            testingClient.server("test").run(setBrowserFlowToRealm());
+            revertFlows("browser - copy 1");
         }
     }
 
@@ -1080,11 +1078,23 @@ public class BrowserFlowTest extends AbstractTestRealmKeycloakTest {
         );
     }
 
-    static RunOnServer setBrowserFlowToRealm() {
-        return session -> {
-            RealmModel appRealm = session.getContext().getRealm();
-            AuthenticationFlowModel existingBrowserFlow = appRealm.getFlowByAlias(DefaultAuthenticationFlows.BROWSER_FLOW);
-            appRealm.setBrowserFlow(existingBrowserFlow);
-        };
+
+    private void revertFlows(String flowToDeleteAlias) {
+        List<AuthenticationFlowRepresentation> flows = testRealm().flows().getFlows();
+
+        // Set default browser flow
+        RealmRepresentation realm = testRealm().toRepresentation();
+        realm.setBrowserFlow(DefaultAuthenticationFlows.BROWSER_FLOW);
+        testRealm().update(realm);
+
+        AuthenticationFlowRepresentation flowRepresentation = AbstractAuthenticationTest.findFlowByAlias(flowToDeleteAlias, flows);
+
+        // Throw error if flow doesn't exists to ensure we did not accidentally use different alias of non-existing flow when
+        // calling this method
+        if (flowRepresentation == null) {
+            throw new IllegalArgumentException("The flow with alias " + flowToDeleteAlias + " did not exists");
+        }
+
+        testRealm().flows().deleteFlow(flowRepresentation.getId());
     }
 }
