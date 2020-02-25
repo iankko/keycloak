@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.keycloak.testsuite.console.page.authentication.otppolicy;
+package org.keycloak.testsuite.console.page.authentication.policy.otp;
 
 import org.jboss.arquillian.graphene.page.Page;
 import org.keycloak.testsuite.console.page.authentication.Authentication;

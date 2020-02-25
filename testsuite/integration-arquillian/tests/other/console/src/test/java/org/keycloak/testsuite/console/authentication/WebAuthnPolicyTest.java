@@ -1,24 +1,20 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2012, Red Hat, Inc., and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
- * 
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- * 
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ * Copyright 2020 Red Hat, Inc. and/or its affiliates
+ * and other contributors as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package org.keycloak.testsuite.console.authentication;
 
 import org.jboss.arquillian.graphene.page.Page;
@@ -26,32 +22,59 @@ import org.junit.Before;
 import org.junit.Test;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.testsuite.console.AbstractConsoleTest;
+/*
 import org.keycloak.testsuite.console.page.authentication.policy.otp.OTPPolicy;
 import org.keycloak.testsuite.console.page.authentication.policy.otp.OTPPolicyForm.Digits;
 import org.keycloak.testsuite.console.page.authentication.policy.otp.OTPPolicyForm.OTPHashAlg;
 import org.keycloak.testsuite.console.page.authentication.policy.otp.OTPPolicyForm.OTPType;
+*/
+import org.keycloak.testsuite.console.page.authentication.policy.webauthn.WebAuthnPolicy;
+import org.keycloak.testsuite.console.page.authentication.policy.webauthn.WebAuthnPolicyForm.AttestationConveyancePreference;
+import org.keycloak.testsuite.console.page.authentication.policy.webauthn.WebAuthnPolicyForm.AuthenticatorAttachmentModality;
+import org.keycloak.testsuite.console.page.authentication.policy.webauthn.WebAuthnPolicyForm.ResidentKeyRequirement;
+import org.keycloak.testsuite.console.page.authentication.policy.webauthn.WebAuthnPolicyForm.SignatureAlgorithm;
+import org.keycloak.testsuite.console.page.authentication.policy.webauthn.WebAuthnPolicyForm.UserVerificationRequirement;
 import org.keycloak.testsuite.util.WaitUtils;
 
 import static org.junit.Assert.*;
 
 /**
- *
- * @author <a href="mailto:vramik@redhat.com">Vlastislav Ramik</a>
+ * @author <a href="mailto:jlieskov@redhat.com">Jan Lieskovsky</a>
  */
-public class OTPPolicyTest extends AbstractConsoleTest {
+public class WebAuthnPolicyTest extends AbstractConsoleTest {
     
     @Page
-    private OTPPolicy otpPolicyPage;
+    private WebAuthnPolicy webauthnPolicyPage;
     
     @Before
-    public void beforeOTPPolicyTest() {
-        otpPolicyPage.navigateTo();
+    public void beforeWebAuthnPolicyTest() {
+        webauthnPolicyPage.navigateTo();
         WaitUtils.pause(1000); // wait for the form to fully render
     }
     
     @Test
-    public void otpPolicyTest() {
-        otpPolicyPage.form().setValues(OTPType.COUNTER_BASED, OTPHashAlg.SHA256, Digits.EIGHT, "10", "50");
+    public void webAuthnPolicyTest() {
+        webauthnPolicyPage.form().setValues("Test relying party entity name",
+                                            SignatureAlgorithm.ES256,
+                                            "Relying party identifier",
+                                            AttestationConveyancePreference.NONE,
+                                            AuthenticatorAttachmentModality.PLATFORM,
+                                            ResidentKeyRequirement.YES,
+                                            UserVerificationRequirement.REQUIRED,
+                                            "10",
+                                            true,
+                                            "String acceptable aaguids");
+
+	System.out.println("Got the following page source:");
+	System.out.println(String.format("%s", driver.getPageSource()));
+	try {
+            System.out.println("Sleeping for 20 minutes.");
+            Thread.sleep(120000000);
+        } catch (InterruptedException ie) { }
+
+
+
+        /* otpPolicyPage.form().setValues(OTPType.COUNTER_BASED, OTPHashAlg.SHA256, Digits.EIGHT, "10", "50");
         assertAlertSuccess();
         
         RealmRepresentation realm = testRealmResource().toRepresentation();
@@ -65,10 +88,12 @@ public class OTPPolicyTest extends AbstractConsoleTest {
         assertAlertSuccess();
         
         realm = testRealmResource().toRepresentation();
-        assertEquals(Integer.valueOf(40), realm.getOtpPolicyPeriod());
-    }      
+        assertEquals(Integer.valueOf(40), realm.getOtpPolicyPeriod()); */
+    }
+
+}
     
-    @Test
+/*    @Test
     public void invalidValuesTest() {
         otpPolicyPage.form().setValues(OTPType.TIME_BASED, OTPHashAlg.SHA1, Digits.SIX, "", "30");
         assertAlertDanger();
@@ -116,3 +141,5 @@ public class OTPPolicyTest extends AbstractConsoleTest {
         assertEquals(Integer.valueOf(0), realm.getOtpPolicyInitialCounter());
     }
 }
+
+*/

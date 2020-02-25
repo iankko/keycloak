@@ -23,12 +23,12 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.testsuite.console.AbstractConsoleTest;
-import org.keycloak.testsuite.console.page.authentication.PasswordPolicy;
+import org.keycloak.testsuite.console.page.authentication.policy.password.PasswordPolicy;
 import org.keycloak.testsuite.console.page.users.UserCredentials;
 
 import static org.junit.Assert.assertTrue;
-import static org.keycloak.testsuite.console.page.authentication.PasswordPolicy.Type.DIGITS;
-import static org.keycloak.testsuite.console.page.authentication.PasswordPolicy.Type.REGEX_PATTERN;
+import static org.keycloak.testsuite.console.page.authentication.policy.password.PasswordPolicy.Type.DIGITS;
+import static org.keycloak.testsuite.console.page.authentication.policy.password.PasswordPolicy.Type.REGEX_PATTERN;
 
 /**
  * @author Petr Mensik

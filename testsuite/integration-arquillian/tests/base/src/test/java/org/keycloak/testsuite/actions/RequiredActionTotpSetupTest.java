@@ -22,6 +22,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.keycloak.OAuth2Constants;
+import org.keycloak.models.UserManager;
+import org.keycloak.models.UserModel;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.events.Details;
 import org.keycloak.events.EventType;
@@ -50,6 +53,7 @@ import org.keycloak.testsuite.pages.LoginTotpPage;
 import org.keycloak.testsuite.pages.RegisterPage;
 import org.keycloak.testsuite.util.RealmBuilder;
 import org.keycloak.testsuite.util.UserBuilder;
+import org.keycloak.testsuite.util.javascript.JavascriptPayloadProvider;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -275,7 +279,6 @@ public class RequiredActionTotpSetupTest extends AbstractTestRealmKeycloakTest {
         registerPage.register("firstName", "lastName", "setupTotpRegister@mail.com", "setupTotpRegister", "password", "password");
 
         String userId = events.expectRegister("setupTotpRegister", "setupTotpRegister@mail.com").assertEvent().getUserId();
-
         assertTrue(totpPage.isCurrent());
 
         // KEYCLOAK-11753 - Verify OTP label element present on "Configure OTP" required action form
@@ -292,6 +295,52 @@ public class RequiredActionTotpSetupTest extends AbstractTestRealmKeycloakTest {
 
         String pageSource = driver.getPageSource();
         assertTrue(pageSource.contains(customOtpLabel));
+    }
+
+    // KEYCLOAK-12716 Verify any HTML markup possibly present in OTP label gets always escaped by default
+    @Test
+    public void setupTotpRegisterVerifyHtmlMarkupInUserLabelEscapedByDefault() {
+        try {
+            loginPage.open();
+            loginPage.clickRegister();
+            registerPage.register("Bruce", "Wilson", "bwilson@keycloak.org", "bwilson", "password", "password");
+
+            String userId = events.expectRegister("bwilson", "bwilson@keycloak.org").assertEvent().getUserId();
+            assertTrue(totpPage.isCurrent());
+
+            // Set crafted OTP label containing JavaScript payload
+            final String jsPayloadOtpLabel = "Testing" + " " + JavascriptPayloadProvider.JSEquippedHTMLTagConstants.HTML_ATAG_JS_DOC_COOKIE + " " + "OTP device.";
+            totpPage.configure(totp.generateTOTP(totpPage.getTotpSecret()), jsPayloadOtpLabel);
+
+            // Assert user authenticated
+            appPage.assertCurrent();
+            Assert.assertEquals(AppPage.RequestType.AUTH_RESPONSE, appPage.getRequestType());
+            Assert.assertNotNull(oauth.getCurrentQuery().get(OAuth2Constants.CODE));
+
+            // Prepare expected result of HTML markup escaping (reserved HTML characters should be replaced with their HTML entity counterparts)
+            final String jsPayloadEscaped = JavascriptPayloadProvider.escapeHtmlExceptDoubleQuotes(jsPayloadOtpLabel);
+
+            // Verify the HTML markup is properly escaped on the Account page
+            accountTotpPage.open();
+            accountTotpPage.assertCurrent();
+            Assert.assertTrue(driver.getPageSource().contains(jsPayloadEscaped));
+
+            // Drop the newly created OTP authenticator
+            accountTotpPage.removeTotp();
+
+            // Logout
+            oauth.openLogout();
+
+        // Undo setup changes performed within the test
+        } finally {
+            testingClient.server("test").run(session -> {
+                UserManager um = new UserManager(session);
+                UserModel user = session.users().getUserByUsername("bwilson", session.getContext().getRealm());
+                if (user != null) {
+                    um.removeUser(session.getContext().getRealm(), user);
+                }
+            });
+        }
     }
 
     @Test

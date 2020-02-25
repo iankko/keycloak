@@ -1,5 +1,6 @@
-package org.keycloak.testsuite.console.page.authentication;
+package org.keycloak.testsuite.console.page.authentication.policy.password;
 
+import org.keycloak.testsuite.console.page.authentication.Authentication;
 import org.keycloak.testsuite.util.UIUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;

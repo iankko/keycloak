@@ -50,6 +50,7 @@ import org.keycloak.testsuite.pages.webauthn.WebAuthnRegisterPage;
 import org.keycloak.testsuite.WebAuthnAssume;
 import org.keycloak.testsuite.pages.AppPage;
 import org.keycloak.testsuite.pages.AppPage.RequestType;
+import org.keycloak.testsuite.util.javascript.JavascriptPayloadProvider;
 
 import static org.junit.Assert.assertEquals;
 
@@ -355,4 +356,77 @@ public class WebAuthnRegisterAndLoginTest extends AbstractTestRealmKeycloakTest 
         testRealm().update(rep);
     }
 
+    /**
+     * KEYCLOAK-12715 Verify any HTML markup possibly present in:
+     *     * Relying Party Entity Name,
+     *     * Relying Party ID,
+     *     * Acceptable AAGUIDs
+     * fields of the WebAuthn policy gets always escaped by default
+     *
+     * KEYCLOAK-12716 Verify any HTML markup possibly present in
+     * the WebAuthn label gets always escaped by default
+     */
+    @Test
+    public void webAuthnPolicyRegisterUserVerifyHTMLMarkupEscapedByDefault() {
+        String username = "bwilson";
+        String password = "password";
+        String email = "bwilson@keycloak.org";
+
+        try {
+            RealmRepresentation rep = backupWebAuthnRealmSettings();
+            rep.setWebAuthnPolicySignatureAlgorithms(Arrays.asList("ES256"));
+            rep.setWebAuthnPolicyAttestationConveyancePreference("none");
+            rep.setWebAuthnPolicyAuthenticatorAttachment("cross-platform");
+            rep.setWebAuthnPolicyRequireResidentKey("No");
+            rep.setWebAuthnPolicyRpId(null);
+            rep.setWebAuthnPolicyUserVerificationRequirement("preferred");
+            rep.setWebAuthnPolicyAcceptableAaguids(Arrays.asList(ALL_ZERO_AAGUID));
+            testRealm().update(rep);
+
+            loginPage.open();
+            loginPage.clickRegister();
+            registerPage.assertCurrent();
+
+            String authenticatorLabel = "Testing" + " " + JavascriptPayloadProvider.JSEquippedHTMLTagConstants.HTML_ATAG_JS_DOC_COOKIE + " " + "WebAuthn device.";
+            registerPage.register("Bruce", "Wilson", email, username, password, password);
+
+            // User was registered. Now he needs to register WebAuthn credential
+            webAuthnRegisterPage.registerWebAuthnCredential(authenticatorLabel);
+
+            appPage.assertCurrent();
+            assertEquals(RequestType.AUTH_RESPONSE, appPage.getRequestType());
+            appPage.openAccount();
+
+            // confirm that registration is successfully completed
+            String userId = events.expectRegister(username, email).assertEvent().getUserId();
+            // confirm registration event
+            EventRepresentation eventRep = events.expectRequiredAction(EventType.CUSTOM_REQUIRED_ACTION)
+            .user(userId)
+                .detail(Details.CUSTOM_REQUIRED_ACTION, WebAuthnRegisterFactory.PROVIDER_ID)
+                .detail(WebAuthnConstants.PUBKEY_CRED_LABEL_ATTR, authenticatorLabel)
+                .assertEvent();
+            String regPubKeyCredentialId = eventRep.getDetails().get(WebAuthnConstants.PUBKEY_CRED_ID_ATTR);
+            //String regPubKeyCredentialAaguid = eventRep.getDetails().get("public_key_credential_aaguid");
+            //String regPubKeyCredentialLabel = eventRep.getDetails().get("public_key_credential_label");
+
+            // confirm login event
+            String sessionId = events.expectLogin()
+                .user(userId)
+                .detail(Details.CUSTOM_REQUIRED_ACTION, WebAuthnRegisterFactory.PROVIDER_ID)
+                .detail(WebAuthnConstants.PUBKEY_CRED_LABEL_ATTR, authenticatorLabel)
+                .assertEvent().getSessionId();
+            // confirm user registered
+            assertUserRegistered(userId, username.toLowerCase(), email.toLowerCase());
+
+            // logout by user
+            appPage.logout();
+            // confirm logout event
+            events.expectLogout(sessionId)
+                .user(userId)
+                .assertEvent();
+
+         } finally {
+            restoreWebAuthnRealmSettings();
+        }
+    }
 }
