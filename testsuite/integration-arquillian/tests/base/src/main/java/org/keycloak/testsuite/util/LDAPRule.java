@@ -242,10 +242,12 @@ public class LDAPRule extends ExternalResource {
         switch (defaultProperties.getProperty(LDAPEmbeddedServer.PROPERTY_ENABLE_STARTTLS)) {
             case "true":
                 config.put(LDAPConstants.START_TLS, "true");
+                config.put(LDAPConstants.USE_TRUSTSTORE_SPI, LDAPConstants.USE_TRUSTSTORE_ALWAYS);
                 break;
             default:
                 // Default to startTLS disabled
                 config.put(LDAPConstants.START_TLS, "false");
+                config.put(LDAPConstants.USE_TRUSTSTORE_SPI, LDAPConstants.USE_TRUSTSTORE_LDAPS_ONLY);
         }
         switch (defaultProperties.getProperty(LDAPEmbeddedServer.PROPERTY_SET_CONFIDENTIALITY_REQUIRED)) {
             case "true":

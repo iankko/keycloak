@@ -160,7 +160,7 @@ public class LDAPConstants {
         }
 
         if (shouldSetTruststore) {
-            env.put("java.naming.ldap.factory.socket", "org.keycloak.truststore.SSLSocketFactory");
+            env.put("java.naming.ldap.factory.socket", "org.keycloak.storage.ldap.truststore.SSLSocketFactory");
         }
     }
 }

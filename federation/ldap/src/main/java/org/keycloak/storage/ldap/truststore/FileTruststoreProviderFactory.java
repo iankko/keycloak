@@ -15,12 +15,15 @@
  * limitations under the License.
  */
 
-package org.keycloak.truststore;
+package org.keycloak.storage.ldap.truststore;
 
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
+import org.keycloak.truststore.HostnameVerificationPolicy;
+import org.keycloak.truststore.TruststoreProvider;
+import org.keycloak.truststore.TruststoreProviderFactory;
 
 import javax.security.auth.x500.X500Principal;
 import java.io.File;

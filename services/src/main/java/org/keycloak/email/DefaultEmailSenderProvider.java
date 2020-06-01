@@ -22,8 +22,8 @@ import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
 import org.keycloak.services.ServicesLogger;
+import org.keycloak.storage.ldap.truststore.JSSETruststoreConfigurator;
 import org.keycloak.truststore.HostnameVerificationPolicy;
-import org.keycloak.truststore.JSSETruststoreConfigurator;
 import org.keycloak.vault.VaultStringSecret;
 
 import javax.mail.Address;

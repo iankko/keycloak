@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
-package org.keycloak.truststore;
+package org.keycloak.storage.ldap.truststore;
+
+import org.keycloak.truststore.HostnameVerificationPolicy;
+import org.keycloak.truststore.TruststoreProvider;
 
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;

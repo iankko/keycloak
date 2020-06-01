@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-package org.keycloak.truststore;
+package org.keycloak.storage.ldap.truststore;
 
 import org.jboss.logging.Logger;
+import org.keycloak.truststore.TruststoreProvider;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -56,7 +57,6 @@ public class SSLSocketFactory extends javax.net.ssl.SSLSocketFactory {
             log.info("No truststore provider found - using default SSLSocketFactory");
             sf = (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory.getDefault();
         }
-
         sslsf = sf;
     }
 

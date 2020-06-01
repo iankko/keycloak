@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-package org.keycloak.truststore;
+package org.keycloak.storage.ldap.truststore;
+
+import org.keycloak.truststore.TruststoreProvider;
 
 /**
  * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
