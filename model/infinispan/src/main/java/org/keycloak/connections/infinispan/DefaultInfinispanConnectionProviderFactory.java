@@ -30,6 +30,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.jboss.marshalling.core.JBossUserMarshaller;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -190,6 +191,11 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
         gcb.globalJmxStatistics()
           .allowDuplicateDomains(allowDuplicateJMXDomains)
           .enable();
+
+        // For Infinispan 10, we go with the JBoss marshalling.
+        // TODO: This should be replaced later with the marshalling recommended by infinispan. Probably protostream.
+        // See https://infinispan.org/docs/stable/titles/developing/developing.html#marshalling for the details
+        gcb.serialization().marshaller(new JBossUserMarshaller());
 
         cacheManager = new DefaultCacheManager(gcb.build());
         containerManaged = false;

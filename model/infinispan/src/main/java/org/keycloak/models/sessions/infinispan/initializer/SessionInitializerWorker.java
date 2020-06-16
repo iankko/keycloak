@@ -39,9 +39,7 @@ import java.util.Set;
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
-//public class SessionInitializerWorker implements DistributedCallable<String, Serializable, SessionLoader.WorkerResult>, Serializable {
-public class SessionInitializerWorker implements Callable<SessionLoader.WorkerResult>, Function<EmbeddedCacheManager, SessionLoader.WorkerResult>, Serializable {
-//public class SessionInitializerWorker implements Callable<SessionLoader.WorkerResult>, Serializable {
+public class SessionInitializerWorker implements Function<EmbeddedCacheManager, SessionLoader.WorkerResult>, Serializable {
 
     private static final Logger log = Logger.getLogger(SessionInitializerWorker.class);
 
@@ -51,42 +49,18 @@ public class SessionInitializerWorker implements Callable<SessionLoader.WorkerRe
 
     private String cacheName;
 
-    private EmbeddedCacheManager manager;
-
-/*    public SessionInitializerWorker(String cacheName) {
-        this.cacheName = cacheName;
-    } */
-
-    //private transient Cache<String, Serializable> workCache;
-
-    public void setWorkerEnvironment(SessionLoader.LoaderContext loaderCtx, SessionLoader.WorkerContext workerCtx, SessionLoader sessionLoader) {
+    public void setWorkerEnvironment(SessionLoader.LoaderContext loaderCtx, SessionLoader.WorkerContext workerCtx, SessionLoader sessionLoader, String cacheName) {
         this.loaderCtx = loaderCtx;
         this.workerCtx = workerCtx;
         this.sessionLoader = sessionLoader;
-    }
-
-    //@Override
-    public void setEnvironment(String cacheName, Set<String> inputKeys) {
         this.cacheName = cacheName;
-    } 
-
-    /* @Override
-    public void setEnvironment(Cache<String, Serializable> workCache, Set<String> inputKeys) {
-        this.workCache = workCache;
-    }*/
-
-    @Override
-    public SessionLoader.WorkerResult call() throws Exception {
-        //CacheManagerLocator locator = CacheManagerLocator.getCacheManagerLocator();
-        //EmbeddedCacheManager manager = locator.getCacheManager(null);
-        return this.apply(manager);
     }
 
     @Override
     public SessionLoader.WorkerResult apply(EmbeddedCacheManager embeddedCacheManager) {
         Cache<Object, Object> workCache = embeddedCacheManager.getCache(cacheName);
         if (log.isTraceEnabled()) {
-            log.tracef("Running computation for segment: %s", workerCtx.toString());
+            log.tracef("Running computation for segment %s with worker %s", workerCtx.getSegment(), workerCtx.getWorkerId());
         }
 
         KeycloakSessionFactory sessionFactory = workCache.getAdvancedCache().getComponentRegistry().getComponent(KeycloakSessionFactory.class);

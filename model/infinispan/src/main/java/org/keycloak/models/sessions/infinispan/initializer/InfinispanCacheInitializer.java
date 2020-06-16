@@ -31,7 +31,9 @@ import org.keycloak.models.utils.KeycloakModelUtils;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 //import java.util.concurrent.ExecutorService;
 //import java.util.concurrent.Executors;
@@ -116,11 +118,11 @@ public class InfinispanCacheInitializer extends BaseCacheInitializer {
         // Assume each worker has same processor's count
         int processors = Runtime.getRuntime().availableProcessors();
 
-        //ExecutorService localExecutor = Executors.newCachedThreadPool();
         Transport transport = workCache.getCacheManager().getTransport();
-        boolean distributed = transport != null;
-        ClusterExecutor clusterExecutor = workCache.getCacheManager().executor();
-        //ExecutorService executorService = distributed ? workCache.getCacheManager().executor() : localExecutor;
+
+        // Every worker iteration will be executed on single node. Use 3 failover attempts for each segment (should be sufficient in all cases)
+        ClusterExecutor clusterExecutor = workCache.getCacheManager().executor()
+                .singleNodeSubmission(3);
 
 
         int errors = 0;
@@ -147,51 +149,35 @@ public class InfinispanCacheInitializer extends BaseCacheInitializer {
                     log.trace("unfinished segments for this iteration: " + segments);
                 }
 
-                //List<CompletableFuture<Void>> futures = new LinkedList<>();
-                List<SessionLoader.WorkerResult> results = new LinkedList<>();
+                List<CompletableFuture<Void>> futures = new LinkedList<>();
+                final Queue<SessionLoader.WorkerResult> results = new ConcurrentLinkedQueue<>();
 
                 CompletableFuture<Void> completableFuture = null;
                 for (Integer segment : segments) {
                     SessionLoader.WorkerContext workerCtx = sessionLoader.computeWorkerContext(loaderCtx, segment, segment - segmentToLoad, previousResult);
 
                     SessionInitializerWorker worker = new SessionInitializerWorker();
-                    worker.setWorkerEnvironment(loaderCtx, workerCtx, sessionLoader);
+                    worker.setWorkerEnvironment(loaderCtx, workerCtx, sessionLoader, workCache.getName());
 
-                    if (!distributed) {
-                        worker.setEnvironment(workCache.getName(), null);
-                    }
+                    completableFuture = clusterExecutor.submitConsumer(worker, (address, workerResult, throwable) -> {
+                        log.tracef("Calling triConsumer on address %s, throwable message: %s, segment: %s", address, throwable == null ? "null" : throwable.getMessage(),
+                                workerResult.getSegment());
 
-                    completableFuture = clusterExecutor.submitConsumer(worker, (a, v, t) -> {
-                        if (t != null) {
-                            throw new CacheException(t);
+                        if (throwable != null) {
+                            throw new CacheException(throwable);
                         }
-                        results.add(v);
+                        results.add(workerResult);
                     });
-                    completableFuture.join();
-                    //CompletableFuture<Void> future = clusterExecutor.submit(worker);
-                    //futures.add(future);
+
+                    futures.add(completableFuture);
                 }
 
                 boolean anyFailure = false;
-                //for (CompletableFuture<Void> future : futures) {
-                for (SessionLoader.WorkerResult result : results) {
+
+                // Make sure that all workers are finished
+                for (CompletableFuture<Void> future : futures) {
                     try {
-                        //SessionLoader.WorkerResult result = future.get();
-			if (completableFuture != null) {
-                            completableFuture.get();
-			}
-                        if (result.isSuccess()) {
-                            state.markSegmentFinished(result.getSegment());
-                            if (result.getSegment() == segmentToLoad + distributedWorkersCount - 1) {
-                                // last result for next iteration when complete
-                                nextResult = result;
-                            }
-                        } else {
-                            if (log.isTraceEnabled()) {
-                                log.tracef("Segment %d failed to compute", result.getSegment());
-                            }
-                            anyFailure = true;
-                        }
+                        future.get();
                     } catch (InterruptedException ie) {
                         anyFailure = true;
                         errors++;
@@ -200,6 +186,22 @@ public class InfinispanCacheInitializer extends BaseCacheInitializer {
                         anyFailure = true;
                         errors++;
                         log.error("ExecutionException when computed future. Errors: " + errors, ee);
+                    }
+                }
+
+                // Check the results
+                for (SessionLoader.WorkerResult result : results) {
+                    if (result.isSuccess()) {
+                        state.markSegmentFinished(result.getSegment());
+                        if (result.getSegment() == segmentToLoad + distributedWorkersCount - 1) {
+                            // last result for next iteration when complete
+                            nextResult = result;
+                        }
+                    } else {
+                        if (log.isTraceEnabled()) {
+                            log.tracef("Segment %d failed to compute", result.getSegment());
+                        }
+                        anyFailure = true;
                     }
                 }
 
