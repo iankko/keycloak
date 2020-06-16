@@ -344,10 +344,12 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
 
         cb.transaction().lockingMode(LockingMode.PESSIMISTIC);
 
-        cb.memory()
-                .evictionStrategy(EvictionStrategy.REMOVE)
-                .evictionType(EvictionType.COUNT)
-                .size(maxEntries);
+        // TODO:mposolda figure and uncomment
+//
+//        cb.memory()
+//                .evictionStrategy(EvictionStrategy.REMOVE)
+//                .evictionType(EvictionType.COUNT)
+//                .size(maxEntries);
 
         return cb.build();
     }
@@ -421,12 +423,13 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
     protected Configuration getKeysCacheConfig() {
         ConfigurationBuilder cb = new ConfigurationBuilder();
 
-        cb.memory()
-                .evictionStrategy(EvictionStrategy.REMOVE)
-                .evictionType(EvictionType.COUNT)
-                .size(InfinispanConnectionProvider.KEYS_CACHE_DEFAULT_MAX);
-
-        cb.expiration().maxIdle(InfinispanConnectionProvider.KEYS_CACHE_MAX_IDLE_SECONDS, TimeUnit.SECONDS);
+        // TODO:mposolda figure and uncomment
+//        cb.memory()
+//                .evictionStrategy(EvictionStrategy.REMOVE)
+//                .evictionType(EvictionType.COUNT)
+//                .size(InfinispanConnectionProvider.KEYS_CACHE_DEFAULT_MAX);
+//
+//        cb.expiration().maxIdle(InfinispanConnectionProvider.KEYS_CACHE_MAX_IDLE_SECONDS, TimeUnit.SECONDS);
         return cb.build();
     }
 
