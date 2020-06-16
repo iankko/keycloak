@@ -124,7 +124,6 @@ public class InfinispanCacheInitializer extends BaseCacheInitializer {
         ClusterExecutor clusterExecutor = workCache.getCacheManager().executor()
                 .singleNodeSubmission(3);
 
-
         int errors = 0;
         int segmentToLoad = 0;
 
