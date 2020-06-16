@@ -18,7 +18,9 @@
 package org.keycloak.models.sessions.infinispan.initializer;
 
 import org.infinispan.Cache;
-import org.infinispan.distexec.DefaultExecutorService;
+import org.infinispan.commons.CacheException;
+//import org.infinispan.distexec.DefaultExecutorService;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.remoting.transport.Transport;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
@@ -29,10 +31,11 @@ import org.keycloak.models.utils.KeycloakModelUtils;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+//import java.util.concurrent.ExecutorService;
+//import java.util.concurrent.Executors;
+//import java.util.concurrent.Future;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.ComponentRegistry;
 
@@ -113,15 +116,17 @@ public class InfinispanCacheInitializer extends BaseCacheInitializer {
         // Assume each worker has same processor's count
         int processors = Runtime.getRuntime().availableProcessors();
 
-        ExecutorService localExecutor = Executors.newCachedThreadPool();
+        //ExecutorService localExecutor = Executors.newCachedThreadPool();
         Transport transport = workCache.getCacheManager().getTransport();
         boolean distributed = transport != null;
-        ExecutorService executorService = distributed ? new DefaultExecutorService(workCache, localExecutor) : localExecutor;
+        ClusterExecutor clusterExecutor = workCache.getCacheManager().executor();
+        //ExecutorService executorService = distributed ? workCache.getCacheManager().executor() : localExecutor;
+
 
         int errors = 0;
         int segmentToLoad = 0;
 
-        try {
+        //try {
             SessionLoader.WorkerResult previousResult = null;
             SessionLoader.WorkerResult nextResult = null;
             int distributedWorkersCount = 0;
@@ -142,8 +147,10 @@ public class InfinispanCacheInitializer extends BaseCacheInitializer {
                     log.trace("unfinished segments for this iteration: " + segments);
                 }
 
-                List<Future<SessionLoader.WorkerResult>> futures = new LinkedList<>();
+                //List<CompletableFuture<Void>> futures = new LinkedList<>();
+                List<SessionLoader.WorkerResult> results = new LinkedList<>();
 
+                CompletableFuture<Void> completableFuture = null;
                 for (Integer segment : segments) {
                     SessionLoader.WorkerContext workerCtx = sessionLoader.computeWorkerContext(loaderCtx, segment, segment - segmentToLoad, previousResult);
 
@@ -151,17 +158,28 @@ public class InfinispanCacheInitializer extends BaseCacheInitializer {
                     worker.setWorkerEnvironment(loaderCtx, workerCtx, sessionLoader);
 
                     if (!distributed) {
-                        worker.setEnvironment(workCache, null);
+                        worker.setEnvironment(workCache.getName(), null);
                     }
 
-                    Future<SessionLoader.WorkerResult> future = executorService.submit(worker);
-                    futures.add(future);
+                    completableFuture = clusterExecutor.submitConsumer(worker, (a, v, t) -> {
+                        if (t != null) {
+                            throw new CacheException(t);
+                        }
+                        results.add(v);
+                    });
+                    completableFuture.join();
+                    //CompletableFuture<Void> future = clusterExecutor.submit(worker);
+                    //futures.add(future);
                 }
 
                 boolean anyFailure = false;
-                for (Future<SessionLoader.WorkerResult> future : futures) {
+                //for (CompletableFuture<Void> future : futures) {
+                for (SessionLoader.WorkerResult result : results) {
                     try {
-                        SessionLoader.WorkerResult result = future.get();
+                        //SessionLoader.WorkerResult result = future.get();
+			if (completableFuture != null) {
+                            completableFuture.get();
+			}
                         if (result.isSuccess()) {
                             state.markSegmentFinished(result.getSegment());
                             if (result.getSegment() == segmentToLoad + distributedWorkersCount - 1) {
@@ -210,12 +228,12 @@ public class InfinispanCacheInitializer extends BaseCacheInitializer {
             // Loader callback after the task is finished
             this.sessionLoader.afterAllSessionsLoaded(this);
 
-        } finally {
+        /* } finally {
             if (distributed) {
                 executorService.shutdown();
             }
             localExecutor.shutdown();
-        }
+        } */
     }
 
 }

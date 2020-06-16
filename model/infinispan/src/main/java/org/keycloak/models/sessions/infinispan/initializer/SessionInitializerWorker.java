@@ -18,29 +18,46 @@
 package org.keycloak.models.sessions.infinispan.initializer;
 
 import org.infinispan.Cache;
-import org.infinispan.distexec.DistributedCallable;
+//import org.infinispan.distexec.DistributedCallable;
+//import org.infinispan.factories.annotations.Inject;
+import org.infinispan.manager.EmbeddedCacheManager;
+//import org.infinispan.manager.impl.UnwrappingEmbeddedCacheManager;
+//import org.infinispan.util.function.SerializableRunnable;
+//import org.jboss.ha.framework.server.CacheManagerLocator;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.KeycloakSessionTask;
+//import org.keycloak.models.sessions.infinispan.initializer.SessionLoader;
 import org.keycloak.models.utils.KeycloakModelUtils;
 
 import java.io.Serializable;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
 import java.util.Set;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
-public class SessionInitializerWorker implements DistributedCallable<String, Serializable, SessionLoader.WorkerResult>, Serializable {
+//public class SessionInitializerWorker implements DistributedCallable<String, Serializable, SessionLoader.WorkerResult>, Serializable {
+public class SessionInitializerWorker implements Callable<SessionLoader.WorkerResult>, Function<EmbeddedCacheManager, SessionLoader.WorkerResult>, Serializable {
+//public class SessionInitializerWorker implements Callable<SessionLoader.WorkerResult>, Serializable {
 
     private static final Logger log = Logger.getLogger(SessionInitializerWorker.class);
-
 
     private SessionLoader.LoaderContext loaderCtx;
     private SessionLoader.WorkerContext workerCtx;
     private SessionLoader sessionLoader;
 
-    private transient Cache<String, Serializable> workCache;
+    private String cacheName;
+
+    private EmbeddedCacheManager manager;
+
+/*    public SessionInitializerWorker(String cacheName) {
+        this.cacheName = cacheName;
+    } */
+
+    //private transient Cache<String, Serializable> workCache;
 
     public void setWorkerEnvironment(SessionLoader.LoaderContext loaderCtx, SessionLoader.WorkerContext workerCtx, SessionLoader sessionLoader) {
         this.loaderCtx = loaderCtx;
@@ -48,13 +65,26 @@ public class SessionInitializerWorker implements DistributedCallable<String, Ser
         this.sessionLoader = sessionLoader;
     }
 
-    @Override
+    //@Override
+    public void setEnvironment(String cacheName, Set<String> inputKeys) {
+        this.cacheName = cacheName;
+    } 
+
+    /* @Override
     public void setEnvironment(Cache<String, Serializable> workCache, Set<String> inputKeys) {
         this.workCache = workCache;
-    }
+    }*/
 
     @Override
     public SessionLoader.WorkerResult call() throws Exception {
+        //CacheManagerLocator locator = CacheManagerLocator.getCacheManagerLocator();
+        //EmbeddedCacheManager manager = locator.getCacheManager(null);
+        return this.apply(manager);
+    }
+
+    @Override
+    public SessionLoader.WorkerResult apply(EmbeddedCacheManager embeddedCacheManager) {
+        Cache<Object, Object> workCache = embeddedCacheManager.getCache(cacheName);
         if (log.isTraceEnabled()) {
             log.tracef("Running computation for segment: %s", workerCtx.toString());
         }
