@@ -135,6 +135,7 @@
         <selenium.version>2.35.0</selenium.version>
         <xml-apis.version>1.4.01</xml-apis.version>
         <subethasmtp.version>3.1.7</subethasmtp.version>
+        <microprofile-metrics-api.version>2.3</microprofile-metrics-api.version>
 
         <!-- Maven Plugins -->
         <replacer.plugin.version>1.3.5</replacer.plugin.version>
@@ -790,11 +791,6 @@
                 <artifactId>infinispan-core</artifactId>
                 <version>${infinispan.version}</version>
             </dependency>
-	    <!--            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-cachestore-jdbc</artifactId>
-                <version>${infinispan.version}</version>
-	    </dependency> -->
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-cachestore-remote</artifactId>
@@ -1502,6 +1498,18 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.microprofile.metrics</groupId>
+                <artifactId>microprofile-metrics-api</artifactId>
+                <version>${microprofile-metrics-api.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.osgi</groupId>
+                        <artifactId>org.osgi.annotation.versioning</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>
