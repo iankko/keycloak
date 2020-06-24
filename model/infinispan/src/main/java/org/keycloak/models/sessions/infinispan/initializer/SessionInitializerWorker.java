@@ -18,23 +18,15 @@
 package org.keycloak.models.sessions.infinispan.initializer;
 
 import org.infinispan.Cache;
-//import org.infinispan.distexec.DistributedCallable;
-//import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
-//import org.infinispan.manager.impl.UnwrappingEmbeddedCacheManager;
-//import org.infinispan.util.function.SerializableRunnable;
-//import org.jboss.ha.framework.server.CacheManagerLocator;
 import org.jboss.logging.Logger;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.models.KeycloakSessionTask;
-//import org.keycloak.models.sessions.infinispan.initializer.SessionLoader;
 import org.keycloak.models.utils.KeycloakModelUtils;
 
 import java.io.Serializable;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
-import java.util.Set;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
@@ -49,12 +41,14 @@ public class SessionInitializerWorker implements Function<EmbeddedCacheManager, 
 
     private String cacheName;
 
+
     public void setWorkerEnvironment(SessionLoader.LoaderContext loaderCtx, SessionLoader.WorkerContext workerCtx, SessionLoader sessionLoader, String cacheName) {
         this.loaderCtx = loaderCtx;
         this.workerCtx = workerCtx;
         this.sessionLoader = sessionLoader;
         this.cacheName = cacheName;
     }
+
 
     @Override
     public SessionLoader.WorkerResult apply(EmbeddedCacheManager embeddedCacheManager) {
@@ -81,5 +75,4 @@ public class SessionInitializerWorker implements Function<EmbeddedCacheManager, 
 
         return ref[0];
     }
-
 }

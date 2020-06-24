@@ -1,5 +1,23 @@
 #!/usr/bin/env python
 
+#*
+# * Copyright 2020 Red Hat, Inc. and/or its affiliates
+# * and other contributors as indicated by the @author tags.
+# *
+# * Licensed under the Apache License, Version 2.0 (the "License");
+# * you may not use this file except in compliance with the License.
+# * You may obtain a copy of the License at
+# *
+# * http://www.apache.org/licenses/LICENSE-2.0
+# *
+# * Unless required by applicable law or agreed to in writing, software
+# * distributed under the License is distributed on an "AS IS" BASIS,
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# * See the License for the specific language governing permissions and
+# * limitations under the License.
+# *
+# *
+
 # Purpose: Upgrade versions of artifacts shared with Wildfly and Wildfly Core
 #          in main Keycloak pom.xml file to versions used by particular Wildfly
 #          tag, specified as script argument
@@ -183,6 +201,7 @@ KEYCLOAK_TO_WILDFLY_ARTIFACT_NAMES = {
     # Skip "selenium.version" since Keycloak specific
     # Skip "xml-apis.version" since intentionally excluded in Wildfly
     # Skip "subethasmtp.version" since Keycloak specific
+    "microprofile-metrics-api.version"                            : "version.org.eclipse.microprofile.metrics.api",
     # Skip "replacer.plugin.version" since Keycloak specific
     # Skip "jboss.as.plugin.version" since Keycloak specific
     # Skip "jmeter.plugin.version" since Keycloak specific

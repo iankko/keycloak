@@ -18,8 +18,9 @@
 package org.keycloak.models.sessions.infinispan.initializer;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
-//import org.infinispan.distexec.DefaultExecutorService;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.remoting.transport.Transport;
 import org.jboss.logging.Logger;
@@ -29,17 +30,12 @@ import org.keycloak.models.KeycloakSessionTask;
 import org.keycloak.models.utils.KeycloakModelUtils;
 
 import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
-//import java.util.concurrent.ExecutorService;
-//import java.util.concurrent.Executors;
-//import java.util.concurrent.Future;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.factories.ComponentRegistry;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 /**
  * Startup initialization for reading persistent userSessions to be filled into infinispan/memory . In cluster,
@@ -55,10 +51,12 @@ public class InfinispanCacheInitializer extends BaseCacheInitializer {
 
     private final int maxErrors;
 
+
     public InfinispanCacheInitializer(KeycloakSessionFactory sessionFactory, Cache<String, Serializable> workCache, SessionLoader sessionLoader, String stateKeySuffix, int sessionsPerSegment, int maxErrors) {
         super(sessionFactory, workCache, sessionLoader, stateKeySuffix, sessionsPerSegment);
         this.maxErrors = maxErrors;
     }
+
 
     @Override
     public void initCache() {
@@ -229,12 +227,5 @@ public class InfinispanCacheInitializer extends BaseCacheInitializer {
             // Loader callback after the task is finished
             this.sessionLoader.afterAllSessionsLoaded(this);
 
-        /* } finally {
-            if (distributed) {
-                executorService.shutdown();
-            }
-            localExecutor.shutdown();
-        } */
     }
-
 }
