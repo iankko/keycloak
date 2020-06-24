@@ -478,6 +478,7 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
                       .nodeName(nodeName)
                       .siteId(siteName)
                       .transport(transport)
+                      .clusterName(siteName)  // Use the cluster corresponding to current site. This is needed as the nodes in different DCs should not share same cluster
                       .globalJmxStatistics()
                         .jmxDomain(InfinispanConnectionProvider.JMX_DOMAIN + "-" + nodeName)
                         .enable()
