@@ -351,6 +351,7 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
         cb.transaction().lockingMode(LockingMode.PESSIMISTIC);
 
         // TODO:mposolda figure and uncomment
+        // DONE:iankko This is fixed by WFLY-13603. Safe to uncomment again once we rebase to Wildfly tag containing the WFLY-13603 fix included
 //
 //        cb.memory()
 //                .evictionStrategy(EvictionStrategy.REMOVE)

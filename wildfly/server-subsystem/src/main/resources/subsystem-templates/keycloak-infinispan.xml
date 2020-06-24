@@ -89,7 +89,7 @@
     </supplement>
     <supplement name="ha">
         <replacement placeholder="CACHE-CONTAINERS">
-            <cache-container name="keycloak">
+            <cache-container name="keycloak" module="org.keycloak.keycloak-model-infinispan">
                 <transport lock-timeout="60000"/>
                 <local-cache name="realms">
                     <object-memory size="10000"/>
