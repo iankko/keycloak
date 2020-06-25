@@ -71,9 +71,10 @@ class TestCacheManagerFactory {
     private <T extends StoreConfigurationBuilder<?, T> & RemoteStoreConfigurationChildBuilder<T>> Configuration getCacheBackedByRemoteStore(int threadId, String cacheName, Class<T> builderClass) {
         ConfigurationBuilder cacheConfigBuilder = new ConfigurationBuilder();
 
-        String host = "localhost";
-        int port = threadId==1 ? 12232 : 13232;
-        //int port = 11222;
+        //String host = "localhost";
+        //int port = threadId==1 ? 12232 : 13232;
+        String host = threadId==1 ? "jdg1" : "jdg2";
+        int port = 11222;
 
         return cacheConfigBuilder.statistics().enable()
                 .persistence().addStore(builderClass)

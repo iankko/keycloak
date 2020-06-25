@@ -787,6 +787,11 @@
                 <version>${wildfly.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.wildfly</groupId>
+                <artifactId>wildfly-clustering-infinispan-marshalling</artifactId>
+                <version>${wildfly.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.wildfly.security</groupId>
                 <artifactId>wildfly-elytron</artifactId>
                 <version>${elytron.version}</version>

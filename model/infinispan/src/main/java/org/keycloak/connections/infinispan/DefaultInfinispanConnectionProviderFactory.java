@@ -21,13 +21,17 @@ import java.util.Iterator;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.ProtocolVersion;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.jboss.marshalling.core.JBossUserMarshaller;
@@ -170,9 +174,6 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
     }
 
     protected void initEmbedded() {
-
-
-        
         GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
 
         boolean clustered = config.getBoolean("clustered", false);
@@ -350,15 +351,27 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
 
         cb.transaction().lockingMode(LockingMode.PESSIMISTIC);
 
-        // TODO:mposolda figure and uncomment
-        // DONE:iankko This is fixed by WFLY-13603. Safe to uncomment again once we rebase to Wildfly tag containing the WFLY-13603 fix included
-//
-//        cb.memory()
-//                .evictionStrategy(EvictionStrategy.REMOVE)
-//                .evictionType(EvictionType.COUNT)
-//                .size(maxEntries);
+        cb.memory()
+                .evictionStrategy(EvictionStrategy.REMOVE)
+                .evictionType(EvictionType.COUNT)
+                .size(maxEntries);
+
+        // TODO: Remove this
+        if (!containerManaged) {
+            addDataContainerConfig(cb);
+        }
 
         return cb.build();
+    }
+
+    // TODO: This method is temporary workaround needed due the WFLY-13603. It should not be needed after upgrade to Wildfly bigger than 20
+    private void addDataContainerConfig(ConfigurationBuilder cb) {
+        try {
+            Class<? extends Builder<?>> clazz = (Class<? extends Builder<?>>) Class.forName("org.wildfly.clustering.infinispan.spi.DataContainerConfigurationBuilder");
+            cb.addModule(clazz);
+        } catch (ClassNotFoundException cnfe) {
+            throw new RuntimeException(cnfe);
+        }
     }
 
     // Used for cross-data centers scenario. Usually integration with external JDG server, which itself handles communication between DCs.
@@ -430,13 +443,18 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
     protected Configuration getKeysCacheConfig() {
         ConfigurationBuilder cb = new ConfigurationBuilder();
 
-        // TODO:mposolda figure and uncomment
-//        cb.memory()
-//                .evictionStrategy(EvictionStrategy.REMOVE)
-//                .evictionType(EvictionType.COUNT)
-//                .size(InfinispanConnectionProvider.KEYS_CACHE_DEFAULT_MAX);
-//
-//        cb.expiration().maxIdle(InfinispanConnectionProvider.KEYS_CACHE_MAX_IDLE_SECONDS, TimeUnit.SECONDS);
+        cb.memory()
+                .evictionStrategy(EvictionStrategy.REMOVE)
+                .evictionType(EvictionType.COUNT)
+                .size(InfinispanConnectionProvider.KEYS_CACHE_DEFAULT_MAX);
+
+        cb.expiration().maxIdle(InfinispanConnectionProvider.KEYS_CACHE_MAX_IDLE_SECONDS, TimeUnit.SECONDS);
+
+        // TODO: Remove this
+        if (!containerManaged) {
+            addDataContainerConfig(cb);
+        }
+
         return cb.build();
     }
 
@@ -475,15 +493,20 @@ public class DefaultInfinispanConnectionProviderFactory implements InfinispanCon
                     channel.setName(nodeName);
                     JGroupsTransport transport = new JGroupsTransport(channel);
 
-                    gcb.transport()
+                    TransportConfigurationBuilder transportBuilder = gcb.transport()
                       .nodeName(nodeName)
                       .siteId(siteName)
-                      .transport(transport)
-                      .clusterName(siteName)  // Use the cluster corresponding to current site. This is needed as the nodes in different DCs should not share same cluster
-                      .globalJmxStatistics()
+                      .transport(transport);
+
+                    // Use the cluster corresponding to current site. This is needed as the nodes in different DCs should not share same cluster
+                    if (siteName != null) {
+                        transportBuilder.clusterName(siteName);
+                    }
+
+
+                    transportBuilder.globalJmxStatistics()
                         .jmxDomain(InfinispanConnectionProvider.JMX_DOMAIN + "-" + nodeName)
-                        .enable()
-                      ;
+                        .enable();
 
                     logger.infof("Configured jgroups transport with the channel name: %s", nodeName);
                 } catch (Exception e) {

@@ -24,7 +24,7 @@
     </subsystem>
     <supplement name="default">
         <replacement placeholder="CACHE-CONTAINERS">
-            <cache-container name="keycloak">
+            <cache-container name="keycloak" module="org.keycloak.keycloak-model-infinispan">
                 <local-cache name="realms">
                     <object-memory size="10000"/>
                 </local-cache>

@@ -552,6 +552,17 @@
       </licenses>
     </dependency>
     <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-jboss-marshalling</artifactId>
+      <version>10.1.8.Final</version>
+      <licenses>
+        <license>
+          <name>Apache Software License 2.0</name>
+          <url>https://raw.githubusercontent.com/infinispan/infinispan/master/LICENSE.md</url>
+        </license>
+      </licenses>
+    </dependency>
+    <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-cbor</artifactId>
       <version>2.10.1</version>
