@@ -36,27 +36,25 @@
 
     <properties>
 
-        <!-- Performing a Wildfly upgrade?
+        <!--
+        Performing a Wildfly upgrade? Run the:
 
-             Run: "./misc/scripts/upgrade-main-keycloak-pom-to-wildfly-tag.py" with the corresponding
-             Wildfly tag, e.g. '20.0.0.Final' to get the properties below updated automatically based
-             on their Wildfly / Wildfly Core counterparts. Once done, compare the changes in this file
+             "./misc/scripts/upgrade-wildfly/upgrade-keycloak-to-wildfly-tag.py"
 
+        script with the corresponding Wildfly tag, e.g. '20.0.0.Final' to get necessary Keycloak bits
+        updated automatically based on corresponding artifact versions used in Wildfly and Wildfly Core
 
-             IMPORTANT: If you add new dependency name / version property below, be sure to update the
-             "./misc/scripts/upgrade-main-keycloak-pom-to-wildfly-tag.py" script too (list the property
-             either as Keycloak specific, or blacklisted, or add a mapping of Keycloak property name to
-             corresponding property name as used in Wildfly / Wildfly Core's pom file) so the script
-             continues to work
+        IMPORTANT: If you add new dependency name / version property below, be sure to update the
+        "./misc/scripts/upgrade-wildfly/upgrade-keycloak-to-wildfly-tag.py" script too to ensure
+        the script continues to work
         -->
 
         <product.rhsso.version>7.4.0.GA</product.rhsso.version>
 
         <product.build-time>${timestamp}</product.build-time>
-        <!-- We actually need Wildfly 20.0.0.Final + WFLY-13603 fix to avoid NPE in KEYCLOAK-14502 / KEYCLOAK-14487 -->
         <wildfly.version>20.0.0.Final</wildfly.version>
         <wildfly.build-tools.version>1.2.13.Final</wildfly.build-tools.version>
-        <eap.version>7.4.0.CD19-redhat-00001</eap.version>
+        <eap.version>7.4.0.CD20-redhat-00001</eap.version>
         <wildfly.core.version>12.0.1.Final</wildfly.core.version>
 
         <jboss.as.version>7.2.0.Final</jboss.as.version>
