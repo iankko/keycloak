@@ -35,6 +35,6 @@ embed-server --server-config=standalone-ha.xml
     fetch-state=false, \
     properties={ \
         rawValues=true, \
-        protocolVersion=${keycloak.connectionsInfinispan.hotrodProtocolVersion:2.6} \
+        protocolVersion=${keycloak.connectionsInfinispan.hotrodProtocolVersion:2.9} \
     } \
 )

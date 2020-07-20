@@ -45,6 +45,7 @@
         <module name="org.infinispan"/>
         <module name="org.infinispan.commons"/>
         <module name="org.infinispan.cachestore.remote"/>
+        <module name="org.infinispan.jboss-marshalling"/>
         <module name="org.infinispan.client.hotrod"/>
         <module name="org.wildfly.security.elytron"/>
     </dependencies>

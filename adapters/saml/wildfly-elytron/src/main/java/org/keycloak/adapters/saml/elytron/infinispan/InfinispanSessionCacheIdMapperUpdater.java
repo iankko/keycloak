@@ -27,10 +27,14 @@ import javax.servlet.ServletContext;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.jboss.marshalling.core.JBossUserMarshaller;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.jboss.logging.Logger;
+import org.keycloak.connections.infinispan.InfinispanConnectionProvider;
 
 /**
  *
@@ -63,6 +67,18 @@ public class InfinispanSessionCacheIdMapperUpdater {
 
         try {
             EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) new InitialContext().lookup(cacheContainerLookup);
+	    System.out.println(String.format("Got the following cluster name: %s", cacheManager.getCacheManagerConfiguration().transport().clusterName()));
+
+	    GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+	    // For Infinispan 10, we go with the JBoss marshalling.
+	    // TODO: This should be replaced later with the marshalling recommended by infinispan. Probably protostream.
+	    // See https://infinispan.org/docs/stable/titles/developing/developing.html#marshalling for the details
+	    gcb.serialization().marshaller(new JBossUserMarshaller());
+	    gcb = gcb.clusteredDefault();
+	    gcb.transport().clusterName("test-clustering");
+	    gcb.jmx().domain(InfinispanConnectionProvider.JMX_DOMAIN).enable();
+	    //EmbeddedCacheManager
+            cacheManager = new DefaultCacheManager(gcb.build());
 
             Configuration ssoCacheConfiguration = cacheManager.getCacheConfiguration(cacheName);
             if (ssoCacheConfiguration == null) {

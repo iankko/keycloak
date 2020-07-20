@@ -38,6 +38,11 @@
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-model-infinispan</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
             <artifactId>keycloak-saml-core</artifactId>
             <scope>provided</scope>
         </dependency>
@@ -84,10 +89,20 @@
             <artifactId>infinispan-cachestore-remote</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-jboss-marshalling</artifactId>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Needed for infinispan statistics -->
+	<!-- <dependency>
+             <groupId>org.eclipse.microprofile.metrics</groupId>
+             <artifactId>microprofile-metrics-api</artifactId>
+             <scope>test</scope>
+	</dependency> -->
     </dependencies>
 
 </project>
