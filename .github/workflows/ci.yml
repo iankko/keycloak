@@ -45,6 +45,8 @@ jobs:
       - name: Extract Maven Repo
         shell: bash
         run: tar -xzvf maven-repo.tgz -C ~
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       - name: Build testsuite
         run: mvn clean install -B -Pauth-server-wildfly -DskipTests -f testsuite/pom.xml
       - name: Run base tests
@@ -68,6 +70,8 @@ jobs:
       - name: Extract Maven Repo
         shell: bash
         run: tar -xzvf maven-repo.tgz -C ~
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       - name: Build testsuite
         run: mvn clean install -B -DskipTests -f testsuite/pom.xml
       - name: Run base tests - undertow
