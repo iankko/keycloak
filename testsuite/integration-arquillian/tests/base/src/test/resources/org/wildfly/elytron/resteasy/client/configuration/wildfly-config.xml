@@ -36,6 +36,7 @@
         <ssl-contexts>
             <ssl-context name="wildfly-elytron-resteasy-client-context">
                 <trust-store key-store-name="client-side-truststore"/>
+                <provider-name name="${elytron.client.outbound.ssl.jsse.provider:}"/>
             </ssl-context>
         </ssl-contexts>
         <ssl-context-rules>
