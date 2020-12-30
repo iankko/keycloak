@@ -811,6 +811,7 @@ _wildflyCoreProperties = [
     "apache.httpcomponents.version",
     "apache.httpcomponents.httpcore.version",
     "jboss.dmr.version",
+    "bouncycastle.version",
     "jboss.logging.version",
     "jboss.logging.tools.version",
     "log4j.version",
@@ -886,6 +887,7 @@ def performMainKeycloakPomFileUpdateTask(wildflyPomFile, wildflyCorePomFile, for
                 "Unable to locate element with name: '%s' in '%s' or '%s'" %
                 (wildflyElemName, wildflyPomFile, wildflyCorePomFile)
             )
+            sys.exit(1)
 
     lxml.etree.ElementTree(keycloakXmlTreeRoot).write(mainKeycloakPomPath, encoding = "UTF-8", pretty_print = True, xml_declaration = True)
     stepLogger.info("Done syncing artifact version changes to: '%s'!" % mainKeycloakPomPath.replace(getKeycloakGitRepositoryRoot(), '.'))
