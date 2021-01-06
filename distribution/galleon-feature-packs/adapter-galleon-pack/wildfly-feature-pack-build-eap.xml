@@ -55,6 +55,7 @@
         <extensions>
             <standalone>
                 <extension>org.keycloak.keycloak-adapter-subsystem</extension>
+                <!-- <extension>org.wildfly.extension.microprofile.config-smallrye</extension> -->
             </standalone>
         </extensions>
     </generate-feature-specs>
