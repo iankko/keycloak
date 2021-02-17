@@ -52,10 +52,10 @@
         <product.rhsso.version>7.4.0.GA</product.rhsso.version>
 
         <product.build-time>${timestamp}</product.build-time>
-        <wildfly.version>22.0.0.Final</wildfly.version>
+        <wildfly.version>22.0.1.Final</wildfly.version>
         <wildfly.build-tools.version>1.2.13.Final</wildfly.build-tools.version>
         <eap.version>7.4.0.CD20-redhat-00001</eap.version>
-        <wildfly.core.version>14.0.0.Final</wildfly.core.version>
+        <wildfly.core.version>14.0.1.Final</wildfly.core.version>
 
         <jboss.as.version>7.2.0.Final</jboss.as.version>
         <jboss.as.subsystem.test.version>7.5.22.Final-redhat-1</jboss.as.subsystem.test.version>
@@ -100,7 +100,7 @@
         <sun.xml.ws.version>2.3.1</sun.xml.ws.version>
         <sun.activation.version>1.2.2</sun.activation.version>
         <org.glassfish.jaxb.xsom.version>2.3.3-b02</org.glassfish.jaxb.xsom.version>
-        <undertow.version>2.2.3.Final</undertow.version>
+        <undertow.version>2.2.4.Final</undertow.version>
         <elytron.version>1.14.1.Final</elytron.version>
         <elytron.undertow-server.version>1.8.0.Final</elytron.undertow-server.version>
         <jetty92.version>9.2.4.v20141103</jetty92.version>
