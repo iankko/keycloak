@@ -614,39 +614,100 @@ end-if
 ## Based on [WFLY-14203], [WFLY-14151], and [WFLY-14108] remove MicroProfile SmallRye config, health, and metrics if present
 
 if (outcome == success) of /subsystem=microprofile-config-smallrye/:read-resource
-  echo Removing microprofile-config-smallrye subsystem...
-  /subsystem=microprofile-config-smallrye/:remove
-  echo
+    echo Removing microprofile-config-smallrye subsystem...
+    /subsystem=microprofile-config-smallrye/:remove
+    echo
 end-if
 
 if (outcome == success) of /extension=org.wildfly.extension.microprofile.config-smallrye/:read-resource
-  echo Removing microprofile.config-smallrye extension...
-  /extension=org.wildfly.extension.microprofile.config-smallrye/:remove
-  echo
+    echo Removing microprofile.config-smallrye extension...
+    /extension=org.wildfly.extension.microprofile.config-smallrye/:remove
+    echo
 end-if
 
 if (outcome == success) of /subsystem=microprofile-health-smallrye/:read-resource
-  echo Removing microprofile-health-smallrye subsystem...
-  /subsystem=microprofile-health-smallrye/:remove
-  echo
+    echo Removing microprofile-health-smallrye subsystem...
+    /subsystem=microprofile-health-smallrye/:remove
+    echo
 end-if
 
 if (outcome == success) of /extension=org.wildfly.extension.microprofile.health-smallrye/:read-resource
-  echo Removing microprofile.health-smallrye extension...
-  /extension=org.wildfly.extension.microprofile.health-smallrye/:remove
-  echo
+    echo Removing microprofile.health-smallrye extension...
+    /extension=org.wildfly.extension.microprofile.health-smallrye/:remove
+    echo
 end-if
 
 if (outcome == success) of /subsystem=microprofile-metrics-smallrye/:read-resource
-  echo Removing microprofile-metrics-smallrye subsystem...
-  /subsystem=microprofile-metrics-smallrye/:remove
-  echo
+    echo Removing microprofile-metrics-smallrye subsystem...
+    /subsystem=microprofile-metrics-smallrye/:remove
+    echo
 end-if
 
 if (outcome == success) of /extension=org.wildfly.extension.microprofile.metrics-smallrye/:read-resource
-  echo Removing microprofile.metrics-smallrye extension...
-  /extension=org.wildfly.extension.microprofile.metrics-smallrye/:remove
-  echo
+    echo Removing microprofile.metrics-smallrye extension...
+    /extension=org.wildfly.extension.microprofile.metrics-smallrye/:remove
+    echo
+end-if
+
+## Yet based on [WFLY-14203], [WFLY-14151], and [WFLY-14108] load
+## org.wildfly.extension.health/org.wildfly.extension.metrics extensions & subsystems instead
+
+if (outcome == failed) of /extension=org.wildfly.extension.health:read-resource
+    echo Adding WildFly extension for health...
+    /extension=org.wildfly.extension.health:add(module=org.wildfly.extension.health)
+    echo
+end-if
+
+if (outcome == failed) of /subsystem=health:read-resource
+    echo Adding Wildfly subsystem for health...
+    /subsystem=health:add(security-enabled=false)
+    echo
+end-if
+
+if (outcome == failed) of /extension=org.wildfly.extension.metrics:read-resource
+    echo Adding Wildfly extension for base metrics...
+    /extension=org.wildfly.extension.metrics:add(module=org.wildfly.extension.metrics)
+    echo
+end-if
+
+if (outcome == failed) of /subsystem=metrics:read-resource
+    echo Adding Wildfly subsystem for base metrics...
+    /subsystem=metrics:add(exposed-subsystems=[*],security-enabled=false)
+    echo
+end-if
+
+if (result == "Keycloak") of :read-attribute(name=product-name)
+    echo Adding base metrics subsystem prefix to Keycloak...
+    /subsystem=metrics:write-attribute(name=prefix,value=${wildfly.metrics.prefix:wildfly})
+    echo
+else
+    echo Adding base metrics subsystem prefix to RH-SSO...
+    /subsystem=metrics:write-attribute(name=prefix,value=${wildfly.metrics.prefix:jboss})
+    echo
+end-if
+
+## Add ability to make use of automatically generated self-signed certificate with Elytron,
+## introduced by WFCORE-5095 in Wildfly Core 14.0.0.Final
+
+if (outcome == failed) of /subsystem=elytron/key-store=applicationKS:read-resource
+    echo Adding key store for the feature of auto-generation of self-signed certificate to Elytron subsystem...
+    /subsystem=elytron/key-store=applicationKS:add(credential-reference={clear-text=password},type=JKS)
+    /subsystem=elytron/key-store=applicationKS:write-attribute(name=path,value=application.keystore)
+    /subsystem=elytron/key-store=applicationKS:write-attribute(name=relative-to,value=jboss.server.config.dir)
+    echo
+end-if
+
+if (outcome == failed) of /subsystem=elytron/key-manager=applicationKM:read-resource
+    echo Adding key manager for the feature of auto-generation of self-signed certificate to Elytron subsystem...
+    /subsystem=elytron/key-manager=applicationKM:add(key-store=applicationKS, credential-reference={clear-text=password})
+    /subsystem=elytron/key-manager=applicationKM:write-attribute(name=generate-self-signed-certificate-host,value=localhost)
+    echo
+end-if
+
+if (outcome == failed) of /subsystem=elytron/server-ssl-context=applicationSSC:read-resource
+    echo Adding SSL context for the feature of auto-generation of self-signed certificate to Elytron subsystem...
+    /subsystem=elytron/server-ssl-context=applicationSSC:add(key-manager=applicationKM)
+    echo
 end-if
 
 echo *** End Migration ***
