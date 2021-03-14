@@ -586,51 +586,54 @@ public class AuthServerTestEnricher {
             "Determining the JSSE security provider to use for outbound " +
             "SSL/TLS connections of the Elytron client..."
         );
-        /** First locate the wildfly-config.xml to use. Per:
-         *  https://docs.wildfly.org/21/Client_Guide.html#wildfly-config-xml-discovery
-         *
-         *  1) try to load it from the 'wildfly.config.url' property
-         */
-        String wildflyConfigXmlPath = System.getProperty("wildfly.config.url");
 
-        //  2) If not set, scan the classpath
+        // Use path to wildfly-config.xml directly if specified
+        String wildflyConfigXmlPath =
+            System.getProperty("path.to.wildfly.config");
+
+        // Otherwise scan the classpath to determine its location
         if (wildflyConfigXmlPath == null) {
             log.debug("Scanning classpath to locate wildfly-config.xml...");
             final String javaClassPath = System.getProperty("java.class.path");
-            for (String dir : javaClassPath.split(":")) {
+            for (String dir : javaClassPath.split(File.pathSeparator)) {
                 if (!dir.isEmpty()) {
                     String candidatePath = dir + File.separator +
                         "wildfly-config.xml";
                     if (new File(candidatePath).exists()) {
                         wildflyConfigXmlPath = candidatePath;
                         log.debugf(
-                            "Using wildfly-config.xml at '%s' location!",
+                            "Found wildfly-config.xml at the '%s' location!",
                             wildflyConfigXmlPath
                         );
                         break;
                     }
                 }
             }
-        } else {
-            log.debugf(
-                "Using wildfly-config.xml from 'wildfly.config.url' " +
-                "property at '%s' location",
-                wildflyConfigXmlPath
-            );
         }
-        // If still not found, that's an error
-        if (wildflyConfigXmlPath == null) {
+
+        final File wildflyConfigXml = ( wildflyConfigXmlPath != null ) ?
+            new File(wildflyConfigXmlPath)                             :
+            null;
+
+        // Throw an error if wildfly-config.xml path specified directly via the
+        // 'path.to.wildfly.config' property doesn't represent a regular file
+        // on the file system, or if it wasn't found by scanning the classpath
+        if ( wildflyConfigXml == null || ! wildflyConfigXml.exists() ) {
             throw new RuntimeException(
                 "Failed to locate the wildfly-config.xml to use for " +
                 "the configuration of Elytron client!"
             );
+        } else {
+            log.debugf(
+                "Exploring wildfly-config.xml at the '%s' location...",
+                wildflyConfigXmlPath
+            );
         }
+
         /** Determine the name of the system property from wildfly-config.xml
          *  holding the name of the security provider which is used by Elytron
          *  client to define its SSL context for outbound SSL connections.
          */
-        final File wildflyConfigXml = new File(wildflyConfigXmlPath);
-
         String jsseSecurityProviderSystemProperty = null;
         try {
             DocumentBuilder documentBuilder = DocumentBuilderFactory
