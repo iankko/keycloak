@@ -805,36 +805,12 @@ def _scanMainKeycloakPomFileForUnknownArtifacts():
             artifactName not in itertools.chain(_excludedProperties, _keycloakSpecificProperties, _keycloakToWildflyProperties.keys())
         )
 
-# Empirical list of artifacts to retrieve from Wildfly-Core's pom.xml rather than from Wildfly's pom.xml
-_wildflyCoreProperties = [
-    "wildfly.build-tools.version",
-    "aesh.version",
-    "apache.httpcomponents.version",
-    "apache.httpcomponents.httpcore.version",
-    "jboss.dmr.version",
-    "bouncycastle.version",
-    "jboss.logging.version",
-    "jboss.logging.tools.version",
-    "log4j.version",
-    "slf4j-api.version",
-    "slf4j.version",
-    "javax.xml.bind.jaxb.version",
-    "undertow.version",
-    "elytron.version",
-    "elytron.undertow-server.version",
-    "woodstox.version",
-    "glassfish.json.version",
-    "picketbox.version",
-    "commons-lang.version",
-    "commons-io.version",
-    "junit.version",
-]
 
 def performMainKeycloakPomFileUpdateTask(wildflyPomFile, wildflyCorePomFile, forceUpdates = False):
     """
     Synchronize the versions of artifacts listed as properties in the main
-    Keycloak pom.xml file with their counterparts taken from 'wildflyPomFile')
-    and 'wildflyCorePomFile'.
+    Keycloak pom.xml file with their counterparts taken from 'wildflyPomFile'
+    or 'wildflyCorePomFile'.
     """
     wildflyXmlTreeRoot = getXmlRoot(wildflyPomFile)
     wildflyCoreXmlTreeRoot = getXmlRoot(wildflyCorePomFile)
@@ -854,12 +830,12 @@ def performMainKeycloakPomFileUpdateTask(wildflyPomFile, wildflyCorePomFile, for
 
         if keycloakElemName == "wildfly.version":
             wildflyElem = getElementsByXPath(wildflyXmlTreeRoot, '/pom:project/pom:version')
-        # Artifact is one of those listed above to be fetched from Wildfly Core's pom.xml
-        elif keycloakElemName in _wildflyCoreProperties:
-            wildflyElem = getPomProperty(wildflyCoreXmlTreeRoot, wildflyElemName)
-        # Otherwise fetch artifact version from Wildfly's pom.xml
         else:
-            wildflyElem = getPomProperty(wildflyXmlTreeRoot, wildflyElemName)
+            # Try to fetch updated artifact version from Wildfly Core's pom.xml first
+            wildflyElem = getPomProperty(wildflyCoreXmlTreeRoot, wildflyElemName)
+            # If not found, fetch it from Wildfly's pom.xml file
+            if not wildflyElem:
+                wildflyElem = getPomProperty(wildflyXmlTreeRoot, wildflyElemName)
 
         if wildflyElem:
             keycloakElem = getPomProperty(keycloakXmlTreeRoot, keycloakElemName)
